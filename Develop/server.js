@@ -5,7 +5,7 @@ const path = require("path");
 
 // Sets up the Express App
 const app = express();
-const PORT = 8081;
+const PORT = process.env.PORT || 8080;
 
 // MIDDLEWARE FUNCTIONS
 // Listen to incoming post requests, handle data parsing, and populate the req.body object 
@@ -15,18 +15,16 @@ app.use(express.json());
 app.use(express.static('public'));
 
 
-
-fs.readFile(path.join(__dirname + "/db/db.json"), "utf8", (err, data) => {
+fs.readFile("db/db.json","utf8", (err, data) => {
     if (err) throw err;
     var notes = JSON.parse(data);
-
 
     // API ROUTES
     // =============================================================
 
-    // Route that reads the db.json file and returns all saved notes in JSON format
+    // Route that reads the db.json file and returns all saved notes
     app.get("/api/notes", function(req, res) {
-        return res.json(notes);
+        res.json(notes);
     });
 
     // Route that recieves a new note to save on the request body, adds it to the db.json file, and then returns the new note to the client
@@ -37,18 +35,14 @@ fs.readFile(path.join(__dirname + "/db/db.json"), "utf8", (err, data) => {
         // Pushes new notes into the array of existing notes
         notes.push(newNote);
         // Calls the updateFile function to add the new note to db.json
-        updateFile();
-        return res.json(newNote);
-        
+        updateFile();     
     });
-
+    
     // Route that reads all notes from the db.json file, recieves a query parameter containing the id of a note to delete, deletes the note with the given id property, and then rewrites the existing notes to db.json
     app.delete("/api/notes/:id", function(req, res) {
-       notes.splice(req.params.id, 1);
+        notes.splice(req.params.id, 1);
        // Calls the updateFile function to delete a note from db.json
        updateFile();
-       return res.json(notes);
-       
     });
    
     // HTML ROUTES
@@ -66,15 +60,14 @@ fs.readFile(path.join(__dirname + "/db/db.json"), "utf8", (err, data) => {
  
     // Updates the db.json file everytime a note is added or deleted
     function updateFile() {
-        fs.writeFile(path.join(__dirname + "/db/db.json"), JSON.stringify(notes,'\t'), "utf8", err => {
-            if(err) throw err;
-            res.sendStatus(200)
+        fs.writeFile("db/db.json", JSON.stringify(notes,'\t'), err => {
+            if (err) throw err;
+            return true;
         });
     }
-
 });
 
-// STARTS SERVER TO BEGIN LISTENING 
+// Starts server to begin listening to the port
 app.listen(PORT, function() {
     console.log("App listening on PORT " + PORT);
 });
